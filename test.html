@@ -266,6 +266,8 @@
             draggingElement = e.target;
             e.target.classList.add('dragging');
             e.dataTransfer.setData('text/plain', e.target.id);
+            currentPlayer = e.target.getAttribute('data-player-id');
+
         }
 
         // 터치 시작
@@ -338,12 +340,14 @@
             if (!dayElement || !dayElement.classList.contains('valid-drop')) return;
 
             const newPosition = parseInt(dayElement.getAttribute('data-day'));
+            console.log('newPosition = ' + newPosition);
             handleMove(newPosition);
         }
 
         // 이동 처리
         function handleMove(newPosition) {
             console.log(currentPlayer);
+            console.log('currentPlayer = ' + currentPlayer);
             const player = players[currentPlayer-1];
             // let message = `플레이어 ${player.id}가 ${newPosition}일로 이동했습니다.`;
 
@@ -353,7 +357,7 @@
             //     message += ' → 무시에 걸려 1일로 이동합니다!';
             // }
 
-            players[currentPlayer-1].position = newPosition;
+            players[(currentPlayer-1 < 0 ? 0  : currentPlayer - 1)].position = newPosition;
             // addLog(message);
 
             // currentPlayer = (currentPlayer + 1) % players.length;
