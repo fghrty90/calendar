@@ -129,7 +129,7 @@
         let isRolling = false;
         let gameStarted = false;
         let gameLog = [];
-
+        let dropZones = null;
         const initializeGame = () => {
             playerCount = Number(document.getElementById('playerCount').value);
             players = Array(playerCount).fill(0).map((_, index) => ({
@@ -143,6 +143,7 @@
             // 달력 초기화
             const container = document.getElementById('calendar-container');
             new TideCalendar(container);
+            dropZones = document.querySelectorAll('.dropZone');
         };
 
 
@@ -237,7 +238,7 @@
                 for (let i = 0; i < firstDayOfMonth; i++) {
                     const emptyDay = document.createElement('div');
                     emptyDay.className = 'day-empty';
-                    emptyDay.textContent = `${beforDaysOfMonth - firstDayOfMonth + (i + 1)}`
+                    emptyDay.textContent = `${beforDaysOfMonth - firstDayOfMonth + (i + 1)}`;
                     emptyDay.id = `gameround-${i+1}`;
                     grid.appendChild(emptyDay);
                 }
@@ -245,12 +246,10 @@
                 // 현재 달의 날짜
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dayEl = document.createElement('div');
-                    dayEl.className = 'day';
+                    dayEl.className = 'day gameround';
                     dayEl.id = `gameround-${day+ firstDayOfMonth}`;
-                    
                     dayEl.ondrop = this.drop; 
                     dayEl.ondragover = this.allowDrop;
-
 
                     const dayNumber = document.createElement('div');
                     dayNumber.className = 'day-number';
@@ -271,6 +270,10 @@
                             playerMarker.id = `player-${player.id}`;
                             playerMarker.draggable = "true";
                             playerMarker.ondragstart = this.drag;
+                            playerMarker.addEventListener('touchstart', this.touchStart, false);
+                            playerMarker.addEventListener('touchmove', this.touchMove, false);
+                            playerMarker.addEventListener('touchend', this.touchEnd, false);
+
                             playerMarker.style.backgroundColor = player.color;
                             playerMarker.textContent = player.id;
                             dayEl.appendChild(playerMarker);
@@ -294,8 +297,29 @@
                 event.preventDefault();
                 const data = event.dataTransfer.getData("text");
                 const element = document.getElementById(data);
+                console.log(event.target);
                 event.target.appendChild(element);
+                if (event.target.classList.contains('dropZone')) {
+                }
+
             }
+
+            touchStart(event) {
+        
+            }
+
+            touchMove(event) {
+                moveAt(event.touches[0].pageX, event.touches[0].pageY);
+            }
+
+            touchEnd(event) {
+                document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY).append(dragItem);
+                dragItem.style.position = 'static';
+                dragItem.style.zIndex = 'auto';
+                dragItem = null;
+            }
+
+
 
             renderInfo() {
                 const info = document.createElement('div');
@@ -358,29 +382,6 @@
                     }
                 });
             }
-
-        //    movePlayer = (steps) => {
-        //         const player = players[currentPlayer];
-        //         let newPosition = player.position + steps;
-        //         if (newPosition > 31) newPosition = 31;
-
-        //         const tide = getTide(newPosition);
-        //         let logMessage = `플레이어 ${player.id}가 ${steps}칸 이동하여 ${newPosition}일에 도착했습니다. (${tide})`;
-
-        //         // 규칙 체크
-        //         if (tide === '무시') {
-        //             newPosition = 1;
-        //             logMessage += ' → 무시에 걸려 1일로 이동합니다!';
-        //         }
-
-        //         player.position = newPosition;
-        //         gameLog.push(logMessage);
-
-        //         currentPlayer = (currentPlayer + 1) % playerCount;
-        //         updateBoard();
-        //         updateLog();
-        //     };
-
         }
 
         // 달력 초기화
