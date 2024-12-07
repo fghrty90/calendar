@@ -124,11 +124,13 @@
                 margin: 0 10px;
                 border-radius: 5px;
             }
-            .befor-day {
-                color : #999999;
+            .before-day {
+                color: #88818186;
             }
             .lunar-day{
                 display: grid;
+                font-size: 12px;
+                text-align: center;
             }
         </style>
     </head>
@@ -198,7 +200,7 @@
 
                     const firstDay = new Date(year, month, 1);
                     const lastDay = new Date(year, month + 1, 0);
-                    const beforDaysOfMonth = new Date(year, month, 0);
+                    const beforeDaysOfMonth = new Date(year, month, 0);
 
                     this.currentMonthElement.textContent = `${year}년 ${month + 1}월`;
                     this.calendarGrid.innerHTML = '';
@@ -216,8 +218,14 @@
 
                     for (let i = 0; i < firstDay.getDay(); i++) {
                         const emptyDay = document.createElement('div');
-                        emptyDay.classList.add('calendar-day','befor-day');
-                        emptyDay.textContent = `${beforDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
+                        emptyDay.classList.add('calendar-day','before-day');
+                        
+                        const numberEl = document.createElement('div');
+                        numberEl.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
+                        numberEl.classList.add('day-number');
+                        emptyDay.appendChild(numberEl);
+
+                        // emptyDay.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
 
                         this.calendarGrid.appendChild(emptyDay);
                     }
