@@ -219,14 +219,11 @@
                     for (let i = 0; i < firstDay.getDay(); i++) {
                         const emptyDay = document.createElement('div');
                         emptyDay.classList.add('calendar-day','before-day');
-                        
+
                         const numberEl = document.createElement('div');
                         numberEl.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
                         numberEl.classList.add('day-number');
                         emptyDay.appendChild(numberEl);
-
-                        // emptyDay.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
-
                         this.calendarGrid.appendChild(emptyDay);
                     }
 
@@ -258,27 +255,6 @@
 
                         dayEl.dataset.date = date;
 
-                        // const currentFullDate = new Date(year, month, date);
-
-                        // if (this.isMenstrualPhase(currentFullDate)) {
-                        //     const phaseIndicator = document.createElement('div');
-                        //     phaseIndicator.classList.add('phase-indicator', 'menstrual-phase');
-                        //     dayEl.appendChild(phaseIndicator);
-                        // }
-
-                        // if (this.isFertilePhase(currentFullDate)) {
-                        //     const phaseIndicator = document.createElement('div');
-                        //     phaseIndicator.classList.add('phase-indicator', 'fertile-phase');
-                        //     dayEl.appendChild(phaseIndicator);
-                        // }
-
-                        // if (this.isSeaTidePhase(currentFullDate)) {
-                        //     const phaseIndicator = document.createElement('div');
-                        //     phaseIndicator.classList.add('phase-indicator', 'sea-tide-phase');
-                        //     dayEl.appendChild(phaseIndicator);
-                        // }
-
-
                         this.calendarGrid.appendChild(dayEl);
                     }
                 }
@@ -307,6 +283,7 @@
                     player.classList.add('player');
                     player.style.backgroundColor = this.getRandomColor(this.players.length);
                     player.textContent = this.players.length + 1;
+                    player.dataset.player = player.textContent;
 
                     this.setupPlayerDrag(player);
 
@@ -341,6 +318,7 @@
 
                         if (elementUnderCursor && elementUnderCursor.closest('.calendar-day[data-date]')) {
                             elementUnderCursor.closest('.calendar-day[data-date]').appendChild(player);
+                            this.sortItemsByClass();
                         }
                     };
 
@@ -385,29 +363,24 @@
 
                 getTide(day) {
                     const tide = [
-                        "7물사리",  "8물", "9물", "10물", "11물", "한객기", "대객기", "조금", "무쉬","1물", 
-                        "2물", "3물", "4물", "5물", "사리", "7물", "8물사리", "9물", "10물", "11물", 
+                        "7물사리",  "8물", "9물", "10물", "11물", "한객기", "대객기", "조금", "무쉬","1물",
+                        "2물", "3물", "4물", "5물", "사리", "7물", "8물사리", "9물", "10물", "11물",
                         "한객기", "대객기", "조금", "무쉬", "1물", "2물", "3물", "4물", "5물", "사리"
                     ];
                     return `${tide[day-1]}`;
                 }
 
-                isMenstrualPhase(date) {
-                    const startDate = new Date(date.getFullYear(), date.getMonth(), 10);
-                    const endDate = new Date(date.getFullYear(), date.getMonth(), 15);
-                    return date >= startDate && date <= endDate;
-                }
+                sortItemsByClass() {
+                    const containers = document.getElementsByClassName('calendar-day');
 
-                isFertilePhase(date) {
-                    const startDate = new Date(date.getFullYear(), date.getMonth(), 12);
-                    const endDate = new Date(date.getFullYear(), date.getMonth(), 18);
-                    return date >= startDate && date <= endDate;
-                }
+                    Array.from(containers).forEach(container => {
+                        const items = Array.from(container.getElementsByClassName('player'));
 
-                isSeaTidePhase(date) {
-                    const startDate = new Date(date.getFullYear(), date.getMonth(), 20);
-                    const endDate = new Date(date.getFullYear(), date.getMonth(), 25);
-                    return date >= startDate && date <= endDate;
+                        items.sort((a, b) => {
+                            return a.getAttribute('data-player') - b.getAttribute('data-player');
+                        });
+                        items.forEach(item => container.appendChild(item));
+                    });
                 }
             }
 
