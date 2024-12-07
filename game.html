@@ -7,6 +7,7 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
         <title>주기 보드게임</title>
+        <script src="https://cdn.jsdelivr.net/npm/korean-lunar-calendar/dist/korean-lunar-calendar.min.js"></script>
         <style>
             * {
                 box-sizing: border-box;
@@ -74,6 +75,7 @@
                 font-size: 0.8rem;
                 margin: 2px;
                 z-index: 1;
+                font: bold 20px / 1 'arial';
             }
             .player {
                 position: relative;
@@ -124,6 +126,9 @@
             }
             .befor-day {
                 color : #999999;
+            }
+            .lunar-day{
+                display: grid;
             }
         </style>
     </head>
@@ -212,13 +217,13 @@
                     for (let i = 0; i < firstDay.getDay(); i++) {
                         const emptyDay = document.createElement('div');
                         emptyDay.classList.add('calendar-day','befor-day');
-                        console.log(beforDaysOfMonth.getDate());
                         emptyDay.textContent = `${beforDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
 
                         this.calendarGrid.appendChild(emptyDay);
                     }
 
                     for (let date = 1; date <= lastDay.getDate(); date++) {
+
                         const dayEl = document.createElement('div');
                         dayEl.classList.add('calendar-day');
 
@@ -227,11 +232,21 @@
                         numberEl.classList.add('day-number');
                         dayEl.appendChild(numberEl);
 
-                        
-                        const phaseIndicator = document.createElement('div');
-                        phaseIndicator.classList.add('sea-tide-phase');
-                        phaseIndicator.textContent = `( ${this.getTide(date)} )`;
-                        dayEl.appendChild(phaseIndicator);
+                        const calendar = new KoreanLunarCalendar();
+                        calendar.setSolarDate(year, month+ 1, date);
+                        const lunar = calendar.getLunarCalendar();
+
+                        const lunarEl = document.createElement('div');
+                        lunarEl.classList.add('lunar-day');
+                        lunarEl.textContent = `${lunar.month}.${lunar.day}`;
+
+                        const phaseIndicatorEl = document.createElement('span');
+                        phaseIndicatorEl.classList.add('sea-tide-phase');
+                        phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                        lunarEl.appendChild(phaseIndicatorEl);
+
+
+                        dayEl.appendChild(lunarEl);
 
                         dayEl.dataset.date = date;
 
@@ -361,11 +376,15 @@
                 }
 
                 getTide(day) {
-                    const tideDay = day % 15;
-                    if (tideDay === 0) return '무시';
-                    if (tideDay === 7 || tideDay === 8) return '조금';
-                    if (tideDay < 7) return `${tideDay}물`;
-                    return `${15 - tideDay}물`;
+                    const tide = [
+                        "7물", "8물", "9물", "10물", "11물", "12물", "13물",
+                        "조금", "무쉬",
+                        "1물", "2물", "3물", "4물", "5물", "사리",
+                        "7물", "8물", "9물", "10물", "11물", "12물", "13물",
+                        "조금", "무쉬",
+                        "1물", "2물", "3물", "4물", "5물", "사리"
+                    ];
+                    return `${tide[day-1]}`;
                 }
 
                 isMenstrualPhase(date) {
