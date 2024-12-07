@@ -95,7 +95,7 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                padding-top: 10px;
+                padding: 10px;
                 background-color: white;
             }
             .phase-indicator {
@@ -128,18 +128,18 @@
     </head>
     <body>
         <div id="app">
-            <div class="player-controls">
-                <label for="playerCount">플레이어 수: </label>
-                <button id="remove-player" class="control-btn">-</button>
-                <span id="player-count">1</span>
-                <button id="add-player" class="control-btn">+</button>
-            </div>
             <div id="calendar-header">
                 <button id="prev-month">◀</button>
                 <h2 id="current-month">2024년 12월</h2>
                 <button id="next-month">▶</button>
             </div>
             <div id="calendar-grid"></div>
+            <div class="player-controls">
+                <label for="playerCount">플레이어 수: </label>
+                <button id="remove-player" class="control-btn">-</button>
+                <span id="player-count">1</span>
+                <button id="add-player" class="control-btn">+</button>
+            </div>
         </div>
 
         <script>
