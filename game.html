@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
         <title>주기 보드게임</title>
         <style>
@@ -16,7 +16,7 @@
             html, body {
                 margin: 0;
                 padding: 0;
-                height: 100%;
+                height: 100vh;
                 overflow: hidden;
                 font-family: Arial, sans-serif;
             }
@@ -96,7 +96,7 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                padding: 10px;
+                padding-top: 10px;
                 background-color: white;
             }
             .phase-indicator {
@@ -129,21 +129,31 @@
     </head>
     <body>
         <div id="app">
-            <div id="calendar-header">
-                <button id="prev-month">◀</button>
-                <h2 id="current-month">2024년 12월</h2>
-                <button id="next-month">▶</button>
-            </div>
-            <div id="calendar-grid"></div>
             <div class="player-controls">
                 <label for="playerCount">플레이어 수: </label>
                 <button id="remove-player" class="control-btn">-</button>
                 <span id="player-count">1</span>
                 <button id="add-player" class="control-btn">+</button>
             </div>
+            <div id="calendar-header">
+                <button id="prev-month">◀</button>
+                <h2 id="current-month">2024년 12월</h2>
+                <button id="next-month">▶</button>
+            </div>
+            <div id="calendar-grid"></div>
         </div>
 
         <script>
+            function setFullHeight() {
+                const fullHeightElements = document.querySelectorAll('.app');
+                fullHeightElements.forEach(element => {
+                    element.style.height = `${window.innerHeight}px`;
+                });
+            }
+
+            window.addEventListener('resize', setFullHeight);
+            window.addEventListener('load', setFullHeight);
+
             class CycleGame {
                 constructor() {
                     this.currentDate = new Date();
