@@ -97,11 +97,13 @@ body {
 }
 
 .player-controls {
-    display: flex;
+    position: relative;
     justify-content: center;
     align-items: center;
     padding-top: 10px;
     background-color: white;
+    width: 100%;
+    padding-left: 10px;
 }
 
 .phase-indicator {
@@ -145,12 +147,20 @@ body {
 .pitfall-btn {
     color: #ffffff;
     background-color: #54547f;
+    float: left;
+    position: absolute;
 }
 
 .move-btn {
     color: #ffffff;
-    background-color: #1f1fd9;
+    background-color: #4444d4;
     border: none;
+    width: 65px;
+    height: 50px;
+    border-radius: 25px;
+    z-index: 12;
+    position: relative;
+    top: -15px;
 }
 
 .before-day {
@@ -251,5 +261,11 @@ body {
     height: 390px;
     position: absolute;
     top: -9999px;
-    /* 화면 밖으로 이동시킵니다 */
+}
+
+.throw-btn {
+    position: relative;
+    height: 60px;
+    font-size: medium;
+    font-weight: bolder;
 }

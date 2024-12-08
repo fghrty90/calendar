@@ -24,13 +24,13 @@
                 <button id="pitfall-pick" class="control-btn pitfall-btn">
                     💣선택
                 </button>
-                <button id="throw" class="control-btn throw-btn">
-                    🎲던지기
-                </button>
             </div>
             <div id="calendar-header">
                 <button id="prev-month">◀</button>
                 <h2 id="current-month">2024년 12월</h2>
+                <button id="throw" class="control-btn throw-btn">
+                    🎲던지기
+                </button>
                 <button id="next-month">▶</button>
             </div>
             <div id="calendar-grid"></div>
@@ -46,7 +46,7 @@
             <div id="gif-container"><img src="./fail.gif" alt="GIF" /></div>
             <div class="diceWrap" id="dice-throw">
                 <label id="player-numder"></label>
-                <!-- <button class="move-btn" id="dice-move">이동</button> -->
+                <button class="move-btn" id="dice-moveBtn">이동 ▶</button>
                 <button class="close-btn" id="dice-closeBtn">✖️</button>
                 <div class="dice">
                     <div class="diceFace front"></div>
@@ -81,6 +81,7 @@
                     this.currentDate = new Date();
                     this.players = [];
                     this.playing = 0;
+                    this.diceVal = 0;
                     this.pitfalls = new Set();
                     this.initDOM();
                     this.renderCalendar();
@@ -111,7 +112,7 @@
                     this.pitfallPickBtn = document.getElementById('pitfall-pick');
                     this.throwBtn = document.getElementById('throw');
                     this.diceCloseBtn = document.getElementById('dice-closeBtn');
-
+                    this.diceMoveBtn = document.getElementById('dice-moveBtn');
                 }
 
                 adjustLayout() {
@@ -335,6 +336,7 @@
                     this.pitfallPickBtn.addEventListener('click', () => this.pitfallPick());
                     this.throwBtn.addEventListener('click', () => this.throw());
                     this.diceCloseBtn.addEventListener('click', () => this.diceClose());
+                    this.diceMoveBtn.addEventListener('click', () => this.diceMove());
                 }
 
                 pitfallEventListeners() {
@@ -404,8 +406,27 @@
                 diceClose() {
                     document.getElementById('dice-throw').style.display = 'none';
                 }
+                diceMove() {
+                    const playing = this.playing+1;
+                    const playEl = document.querySelector(`[data-player="${playing}"]`);
+                    const dateCount = playEl.parentNode.dataset.dateCount*1;
+
+                    for (let index = 1; index <= this.diceVal; index++) {
+                        setTimeout(() => {
+                            setTimeout(() => {
+                                document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
+                            }, 150);
+                        }, index * 300);
+                    }
+
+                    if(playing >= this.players.length) {
+                        this.playing = 0;
+                    } else {
+                        this.playing = playing;
+                    }
+                }
                 throw() {
-                    const playing = this.playing;
+                    this.diceVal = 0;
                     document.getElementById('dice-throw').style.display = 'block';
 
                     const diceVal = Math.floor(Math.random() * 5) + 1;
@@ -416,7 +437,6 @@
 
                     this.setVal(diceVal);
 
-
                     // document.getElementById('diceVal').innerHTML = '';
 
                     setTimeout(function() {
@@ -424,11 +444,7 @@
                         el.classList.add('throw');
                         });
                     }, 50);
-                    if(playing + 1 > this.players.length) {
-                        this.playing = 0;
-                    } else {
-                        this.playing = playing + 1;
-                    }
+                    this.diceVal = diceVal;
                     // setTimeout(function() {
                     //     document.getElementById('diceVal').innerHTML = diceVal;
                     // }, 700);
