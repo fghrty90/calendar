@@ -383,6 +383,9 @@
                         alert('최대 5명까지 추가할 수 있습니다.');
                         return;
                     }
+                    document.querySelectorAll('.player').forEach(function(el) {
+                        el.classList.remove('selected');
+                    });
 
                     const player = document.createElement('div');
                     player.classList.add('player');
@@ -398,6 +401,9 @@
 
                     this.players.push(player);
                     this.updatePlayerCount();
+                    
+                    document.querySelector(`[data-player="1"]`)?.classList.add('selected');
+                    
                 }
 
                 pitfallPick() {
@@ -438,8 +444,7 @@
                     } else {
                         this.playing = playing;
                     }
-                     alert(this.playing);
-                    // selected
+                    
                     document.querySelector(`[data-player="${this.playing+1}"]`)?.classList.add('selected');
                     document.getElementById('dice-throw').style.display = 'none';
                 }
