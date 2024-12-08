@@ -324,11 +324,17 @@
 
                         const lunar = calendar.getLunarCalendar();
 
+                        const nextCalendar = new KoreanLunarCalendar();
+                        nextCalendar.setSolarDate(beforeDaysOfMonth.getFullYear(), beforeDaysOfMonth.getMonth()+1, date+1);
+                        const nextLunar = nextCalendar.getLunarCalendar()
+
                         const lunarEl = document.createElement('div');
                         lunarEl.classList.add('lunar-day');
                         lunarEl.textContent = `${lunar.month}.${lunar.day}`;
-                        const tideName = this.getTide(lunar.day);
+
+                        const tideName = this.getTide(lunar, nextLunar);
                         pitfallList.add(tideName);
+
                         const phaseIndicatorEl = document.createElement('span');
                         phaseIndicatorEl.classList.add('sea-tide-phase');
                         phaseIndicatorEl.textContent = `(${tideName})`;
@@ -359,11 +365,15 @@
 
                         const lunar = calendar.getLunarCalendar();
 
+                        const nextCalendar = new KoreanLunarCalendar();
+                        nextCalendar.setSolarDate(year, month+ 1, date+1);
+                        const nextLunar = nextCalendar.getLunarCalendar()
+
                         const lunarEl = document.createElement('div');
                         lunarEl.classList.add('lunar-day');
                         lunarEl.textContent = `${lunar.month}.${lunar.day}`;
 
-                        const tideName = this.getTide(lunar.day);
+                        const tideName = this.getTide(lunar, nextLunar);
                         pitfallList.add(tideName);
                         const phaseIndicatorEl = document.createElement('span');
                         phaseIndicatorEl.classList.add('sea-tide-phase');
@@ -405,11 +415,16 @@
 
                             const lunar = calendar.getLunarCalendar();
 
+                            const nextCalendar = new KoreanLunarCalendar();
+                            nextCalendar.setSolarDate(nextDaysOfMonth.getFullYear(), nextDaysOfMonth.getMonth()+1, date+1);
+                            const nextLunar = nextCalendar.getLunarCalendar()
+
+
                             const lunarEl = document.createElement('div');
                             lunarEl.classList.add('lunar-day');
                             lunarEl.textContent = `${lunar.month}.${lunar.day}`;
 
-                            const tideName = this.getTide(lunar.day);
+                            const tideName = this.getTide(lunar,nextLunar);
                             pitfallList.add(tideName);
 
                             const phaseIndicatorEl = document.createElement('span');
@@ -571,7 +586,6 @@
                     };
 
                     const endDrag = (e) => {
-                        console.log(player.parentNode.dataset);
                         if(isDragging && this.pitfalls.has(player.parentNode.dataset.tide) && player.parentNode.dataset.dateCount > 1) {
                             showGif();
                             const start = document.querySelectorAll('.start');
@@ -615,13 +629,17 @@
                     });
                 }
 
-                getTide(day) {
+                getTide(lunar , nextLunar) {
                     const tide = [
                         "7물사리",  "8물", "9물", "10물", "11물", "한객기", "대객기", "조금", "무쉬","1물",
-                        "2물", "3물", "4물", "5물", "사리", "7물", "8물사리", "9물", "10물", "11물",
-                        "한객기", "대객기", "조금", "무쉬", "1물", "2물", "3물", "4물", "5물", "사리"
+                        "2물", "3물", "4물", "5물", "6물", "7물", "8물사리", "9물", "10물", "11물",
+                        "한객기", "대객기", "조금", "무쉬", "1물", "2물", "3물", "4물", "5물", "6물"
                     ];
-                    return `${tide[day-1]}`;
+
+                    if (lunar.day == 29 && nextLunar.day <= 1 ) {
+                        return `${tide[lunar.day-1]}${(typeof tide[lunar.day] === "undefined" ? '' : '~'+tide[lunar.day])}`;
+                    }
+                    return `${tide[lunar.day-1]}`;
                 }
 
                 sortItemsByClass() {
