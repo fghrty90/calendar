@@ -227,10 +227,8 @@
 
         <script>
             function showGif() {
-                setTimeout(function() {
-                    var gifContainer = document.getElementById('gif-container'); gifContainer.style.display = 'block'; // 3초 후에 GIF를 닫습니다.
-                    setTimeout(function() { gifContainer.style.display = 'none'; }, 5000); // 시간을 원하는 대로 조정할 수 있습니다.
-                }, 300);
+                var gifContainer = document.getElementById('gif-container'); gifContainer.style.display = 'block'; // 3초 후에 GIF를 닫습니다.
+                setTimeout(function() { gifContainer.style.display = 'none'; }, 3500); // 시간을 원하는 대로 조정할 수 있습니다.
             }
 
             function setFullHeight() {
