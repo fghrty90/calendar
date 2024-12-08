@@ -418,10 +418,11 @@
                                 document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
                                 playEl = document.querySelector(`[data-player="${playing}"]`);
                                 if(index == diceVal && pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1) {
-                                    showGif();
-                                    const start = document.querySelectorAll('.start');
-                                    start[0].appendChild(playEl);
-                                    index = 100;
+                                    setTimeout(() => {
+                                        showGif();
+                                        const start = document.querySelectorAll('.start');
+                                        start[0].appendChild(playEl);
+                                    }, 150);
                                 }
                             }, 150);
                         }, index * 300);
