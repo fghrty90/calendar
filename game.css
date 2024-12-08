@@ -1,0 +1,255 @@
+* {
+    box-sizing: border-box;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 85vh;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #f0f0f0;
+}
+
+#calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px 10px 0px 10px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    flex-grow: 1;
+    gap: 1px;
+    background-color: #e0e0e0;
+    padding: 2px;
+    grid-template-rows: 50px auto;
+}
+
+.calendar-day {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.weekday {
+    height: 50px;
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 2px solid #e5e7eb;
+    background-color: #000000;
+    color: #ffffff;
+    border-radius: 5px;
+}
+
+.weekday.first-day {
+    background-color: #ff0000;
+}
+
+.weekday.last-day {
+    background-color: #0000ff;
+}
+
+.day-number {
+    font-size: 0.8rem;
+    margin: 2px;
+    z-index: 1;
+    font: bold 20px / 1 'arial';
+}
+
+.player {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    cursor: grab;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.player:active {
+    transform: scale(1.1);
+}
+
+.player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+    background-color: white;
+}
+
+.phase-indicator {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    bottom: 0;
+    left: 0;
+}
+
+.menstrual-phase {
+    background-color: rgba(255, 0, 0, 0.5);
+}
+
+.fertile-phase {
+    background-color: rgba(0, 255, 0, 0.5);
+}
+
+.sea-tide-phase {
+    color: rgb(0, 0, 255);
+}
+
+.control-btn {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 5px 10px;
+    margin: 0 10px;
+    border-radius: 5px;
+}
+
+.remove-btn {
+    color: #ffffff;
+    background-color: #c50e0e9c;
+}
+
+.add-btn {
+    color: #ffffff;
+    background-color: #0000ff61;
+}
+
+.pitfall-btn {
+    color: #ffffff;
+    background-color: #54547f;
+}
+
+.move-btn {
+    color: #ffffff;
+    background-color: #1f1fd9;
+    border: none;
+}
+
+.before-day {
+    color: #88818186;
+}
+
+.lunar-day {
+    display: grid;
+    font-size: 12px;
+    text-align: center;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.modal {
+    position: absolute;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* height: 300px; */
+    /* overflow: auto; */
+}
+
+.modal ul {
+    list-style: none;
+    padding: 0;
+    height: 300px;
+    overflow: auto;
+    width: 150px;
+    text-align: center;
+}
+
+.modal li {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #ccc;
+}
+
+.modal li:hover {
+    background-color: #f0f0f0;
+}
+
+.modal li.selected::before {
+    content: '✔️ ';
+    position: relative;
+    padding-left: 10px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.calendar-day.selected::after {
+    content: '💣';
+    position: absolute;
+    lef;
+    right: 0px;
+    z-index: 1;
+    color: initial;
+}
+
+#gif-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff00;
+    padding: 20px;
+    z-index: 10;
+}
+
+#gif-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+#player {
+    width: 640px;
+    height: 390px;
+    position: absolute;
+    top: -9999px;
+    /* 화면 밖으로 이동시킵니다 */
+}
