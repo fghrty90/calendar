@@ -216,6 +216,8 @@
                         this.calendarGrid.appendChild(dayEl);
                     });
 
+                    let dateCount = 1;
+
                     for (let i = 0; i < firstDay.getDay(); i++) {
                         const emptyDay = document.createElement('div');
                         emptyDay.classList.add('calendar-day','before-day');
@@ -223,11 +225,17 @@
                         const numberEl = document.createElement('div');
                         numberEl.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
                         numberEl.classList.add('day-number');
+
+                        emptyDay.dataset.dateCount = dateCount;
+                        dateCount++;
                         emptyDay.appendChild(numberEl);
+
+
                         this.calendarGrid.appendChild(emptyDay);
                     }
+                    const lastDate = lastDay.getDate();
 
-                    for (let date = 1; date <= lastDay.getDate(); date++) {
+                    for (let date = 1; date <= lastDate; date++) {
 
                         const dayEl = document.createElement('div');
                         dayEl.classList.add('calendar-day');
@@ -254,7 +262,9 @@
                         dayEl.appendChild(lunarEl);
 
                         dayEl.dataset.date = date;
-
+                        dayEl.dataset.lastDay = lastDate;
+                        dayEl.dataset.dateCount = dateCount;
+                        dateCount++;
                         this.calendarGrid.appendChild(dayEl);
                     }
                 }
@@ -287,12 +297,13 @@
 
                     this.setupPlayerDrag(player);
 
-                    const days = this.calendarGrid.querySelectorAll('.calendar-day[data-date]');
+                    const days = this.calendarGrid.querySelectorAll('.calendar-day[data-date-count]');
                     const randomDay = days[0];
                     randomDay.appendChild(player);
 
                     this.players.push(player);
                     this.updatePlayerCount();
+                    console.log("?");
                 }
 
                 setupPlayerDrag(player) {
@@ -316,8 +327,8 @@
 
                         const elementUnderCursor = document.elementFromPoint(currentX, currentY);
 
-                        if (elementUnderCursor && elementUnderCursor.closest('.calendar-day[data-date]')) {
-                            elementUnderCursor.closest('.calendar-day[data-date]').appendChild(player);
+                        if (elementUnderCursor && elementUnderCursor.closest('.calendar-day[data-date-count]')) {
+                            elementUnderCursor.closest('.calendar-day[data-date-count]').appendChild(player);
                             this.sortItemsByClass();
                         }
                     };
@@ -325,6 +336,11 @@
                     const endDrag = (e) => {
                         isDragging = false;
                         player.style.cursor = 'grab';
+
+                        // if(player.parentNode.dataset.date == player.parentNode.dataset.lastDay) {
+                        //     alert("이 이겼습니다!!");
+                        // }
+
                     };
 
                     player.addEventListener('mousedown', startDrag);
@@ -353,7 +369,7 @@
                 }
 
                 repositionPlayers() {
-                    const days = this.calendarGrid.querySelectorAll('.calendar-day[data-date]');
+                    const days = this.calendarGrid.querySelectorAll('.calendar-day[data-date-count]');
                     // const days = this.calendarGrid.querySelectorAll('.calendar-day');
                     this.players.forEach(player => {
                         const randomDay = days[0];
