@@ -95,7 +95,7 @@ body {
 .player.selected::after {
     content: '🎲';
     position: absolute;
-    left: 10px;
+    left: 30px;
     lef;
     right: 0px;
     z-index: 1;
