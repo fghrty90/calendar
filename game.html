@@ -408,21 +408,20 @@
                 }
                 diceMove() {
                     const playing = this.playing+1;
-                    const playEl = document.querySelector(`[data-player="${playing}"]`);
+                    let playEl = document.querySelector(`[data-player="${playing}"]`);
                     const dateCount = playEl.parentNode.dataset.dateCount*1;
                     const pitfalls = this.pitfalls;
                     for (let index = 1; index <= this.diceVal; index++) {
                         setTimeout(() => {
                             setTimeout(() => {
-                                
+                                document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
+                                playEl = document.querySelector(`[data-player="${playing}"]`);
                                 if(pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1) {
                                     showGif();
                                     const start = document.querySelectorAll('.start');
                                     start[0].appendChild(playEl);
                                     index = 100;
                                 }
-                                
-                                document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
                             }, 150);
                         }, index * 300);
                     }
