@@ -92,6 +92,15 @@ body {
     transition: all 0.2s ease;
 }
 
+.player.selected::after {
+    content: '🎲';
+    position: absolute;
+    lef;
+    right: 0px;
+    z-index: 1;
+    color: initial;
+}
+
 .player:active {
     transform: scale(1.1);
 }
