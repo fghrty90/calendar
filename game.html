@@ -190,7 +190,8 @@
             .modal li.selected::before {content: '✔️ ';position: relative; padding-left: 10px;}
             .close-btn {position: absolute;top: 0px;right: 0px;background: transparent;border: none;font-size: 20px;cursor: pointer;}
 
-            .calendar-day.selected::after {content: '💣';position: absolute;lef;right: 0px;z-index: 1;}
+            .calendar-day.selected::after {content: '💣';position: absolute;lef;right: 0px;z-index: 1;color: initial;}
+
             #gif-container {display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);background-color: #ffffff00;padding: 20px;z-index: 10;}
             #gif-container img { max-width: 100%; height: auto; }
             #player { width: 640px; height: 390px; position: absolute; top: -9999px; /* 화면 밖으로 이동시킵니다 */ }
@@ -455,7 +456,7 @@
 
                     // 모든 calendar-day 클래스를 가진 요소를 선택합니다.
                     const calendarDays = document.querySelectorAll('.calendar-day');
-                    const firstCalendarDay = this.calendarGrid.querySelectorAll('.calendar-day[data-date="1"]')[0];
+                    const firstCalendarDay = this.calendarGrid.querySelectorAll('.calendar-day[data-date-count="1"]')[0];
 
                     // 마지막 요소를 찾습니다.
                     const lastCalendarDay = calendarDays[calendarDays.length - 1];
@@ -567,7 +568,8 @@
                     };
 
                     const endDrag = (e) => {
-                        if(isDragging && this.pitfalls.has(player.parentNode.dataset.tide) && player.parentNode.dataset.date > 1) {
+                        console.log(player.parentNode.dataset);
+                        if(isDragging && this.pitfalls.has(player.parentNode.dataset.tide) && player.parentNode.dataset.dateCount > 1) {
                             showGif();
                             const start = document.querySelectorAll('.start');
                             start[0].appendChild(player);
