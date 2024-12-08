@@ -419,16 +419,15 @@
                     const pitfalls = this.pitfalls;
                     const diceVal = this.diceVal;
                     
-                    document.querySelectorAll('.player').forEach(function(el) {
-                        el.classList.remove('selected');
-                    });
-                    
                     for (let index = 1; index <= diceVal; index++) {
                         setTimeout(() => {
                             setTimeout(() => {
                                 document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
                                 playEl = document.querySelector(`[data-player="${playing}"]`);
                                 if(index == diceVal ) {
+                                    document.querySelectorAll('.player').forEach(function(el) {
+                                        el.classList.remove('selected');
+                                    });
                                     if( pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1 ) {
                                         setTimeout(() => {
                                             showGif();
