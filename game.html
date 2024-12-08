@@ -428,24 +428,27 @@
                             setTimeout(() => {
                                 document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
                                 playEl = document.querySelector(`[data-player="${playing}"]`);
-                                if(index == diceVal && pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1) {
-                                    setTimeout(() => {
-                                        showGif();
-                                        const start = document.querySelectorAll('.start');
-                                        start[0].appendChild(playEl);
-                                    }, 150);
+                                if(index == diceVal ) {
+                                    if( pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1 ) {
+                                        setTimeout(() => {
+                                            showGif();
+                                            const start = document.querySelectorAll('.start');
+                                            start[0].appendChild(playEl);
+                                        }, 150);
+                                    } else {
+                                        if (playing >= this.players.length) {
+                                            this.playing = 0;
+                                        } else {
+                                            this.playing = playing;
+                                        }
+                                        
+                                        document.querySelector(`[data-player="${this.playing+1}"]`)?.classList.add('selected');
+                                    }
                                 }
                             }, 150);
                         }, index * 300);
                     }
                     
-                    if(playing >= this.players.length) {
-                        this.playing = 0;
-                    } else {
-                        this.playing = playing;
-                    }
-                    
-                    document.querySelector(`[data-player="${this.playing+1}"]`)?.classList.add('selected');
                     document.getElementById('dice-throw').style.display = 'none';
                 }
                 throw() {
