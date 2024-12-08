@@ -8,6 +8,7 @@
 
         <title>주기 보드게임</title>
         <script src="https://cdn.jsdelivr.net/npm/korean-lunar-calendar/dist/korean-lunar-calendar.min.js"></script>
+        <script src="https://www.youtube.com/player_api"></script>
         <style>
             * {
                 box-sizing: border-box;
@@ -124,6 +125,18 @@
                 margin: 0 10px;
                 border-radius: 5px;
             }
+            .remove-btn {
+                color: #ffffff;
+                background-color: #c50e0e;
+            }
+            .add-btn {
+                color: #ffffff;
+                background-color: #0000ff;
+            }
+            .pitfall-btn {
+                color: #ffffff;
+                background-color: #54547f;
+            }
             .before-day {
                 color: #88818186;
             }
@@ -132,15 +145,68 @@
                 font-size: 12px;
                 text-align: center;
             }
+
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                justify-content: center;
+                align-items: center;
+                z-index: 10;
+            }
+
+            .modal {
+                position: absolute;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                /* height: 300px; */
+                /* overflow: auto; */
+            }
+
+            .modal ul {
+                list-style: none;
+                padding: 0;
+                height: 300px;
+                overflow: auto;
+                width: 150px;
+                text-align: center;
+            }
+
+            .modal li {
+                padding: 10px;
+                cursor: pointer;
+                border-bottom: 1px solid #ccc;
+            }
+
+            .modal li:hover {
+                background-color: #f0f0f0;
+            }
+            .modal li.selected::before {content: '✔️ ';position: relative; padding-left: 10px;}
+            .close-btn {position: absolute;top: 0px;right: 0px;background: transparent;border: none;font-size: 20px;cursor: pointer;}
+
+            .calendar-day.selected::after {content: '💣';position: absolute;lef;right: 0px;z-index: 1;}
+            #gif-container {display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);background-color: #ffffff00;padding: 20px;z-index: 10;}
+            #gif-container img { max-width: 100%; height: auto; }
         </style>
     </head>
     <body>
         <div id="app">
             <div class="player-controls">
                 <label for="playerCount">플레이어 수: </label>
-                <button id="remove-player" class="control-btn">-</button>
+                <button id="remove-player" class="control-btn remove-btn">
+                    ➖
+                </button>
                 <span id="player-count">1</span>
-                <button id="add-player" class="control-btn">+</button>
+                <button id="add-player" class="control-btn add-btn">➕</button>
+                <button id="pitfall-pick" class="control-btn pitfall-btn">
+                    💣선택
+                </button>
             </div>
             <div id="calendar-header">
                 <button id="prev-month">◀</button>
@@ -148,9 +214,67 @@
                 <button id="next-month">▶</button>
             </div>
             <div id="calendar-grid"></div>
+            <div class="overlay" id="overlay">
+                <div class="modal">
+                    <button class="close-btn" id="closeBtn">✖️</button>
+                    <ul id="pitfall-list"></ul>
+                </div>
+            </div>
+            <div id="player" style="display: none;"></div>
+            <div id="gif-container"><img src="./fail.gif" alt="GIF" /></div>
         </div>
 
         <script>
+            function showGif() {
+                setTimeout(function() {
+                    var gifContainer = document.getElementById('gif-container'); gifContainer.style.display = 'block'; // 3초 후에 GIF를 닫습니다.
+                    setTimeout(function() { gifContainer.style.display = 'none'; }, 5000); // 시간을 원하는 대로 조정할 수 있습니다.
+                }, 300);
+            }
+            // YouTube iFrame API 비동기적으로 로드
+            // var tag = document.createElement('script');
+            // tag.src = "https://www.youtube.com/iframe_api";
+            // var firstScriptTag = document.getElementsByTagName('script')[0];
+            // firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            // API를 호출한 후 YouTube 플레이어를 만듭니다.
+            var player;
+            function onYouTubeIframeAPIReady() {
+                player = new YT.Player('player', {
+                    height: '390',
+                    width: '640',
+                    videoId: 'oKnIGDBk3b8',  // 재생할 비디오의 ID를 여기에 입력
+                    events: {
+                    // 'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+
+            // 플레이어가 준비되면 비디오를 자동으로 재생합니다.
+            function onPlayerReady(event) {
+                event.target.playVideo();
+            }
+
+            // 비디오 상태가 변경될 때 호출되는 함수입니다.
+            function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // 비디오가 재생 중일 때 실행할 코드
+            }
+            }
+
+            // 비디오를 재생하는 함수
+            function playVideo() {
+                player.playVideo();
+                showGif()
+            }
+
+            // 비디오를 일시 정지하는 함수
+            function pauseVideo() {
+              player.pauseVideo();
+            }
+
+
             function setFullHeight() {
                 const fullHeightElements = document.querySelectorAll('.app');
                 fullHeightElements.forEach(element => {
@@ -165,12 +289,15 @@
                 constructor() {
                     this.currentDate = new Date();
                     this.players = [];
+                    this.pitfalls = new Set();
                     this.initDOM();
                     this.renderCalendar();
                     this.setupEventListeners();
                     this.addPlayer();
                     this.adjustLayout();
+                    this.pitfallEventListeners();
                     window.addEventListener('resize', () => this.adjustLayout());
+                    onYouTubeIframeAPIReady();
                 }
 
                 initDOM() {
@@ -182,6 +309,7 @@
                     this.addPlayerBtn = document.getElementById('add-player');
                     this.removePlayerBtn = document.getElementById('remove-player');
                     this.playerCountElement = document.getElementById('player-count');
+                    this.pitfallPickBtn = document.getElementById('pitfall-pick');
                 }
 
                 adjustLayout() {
@@ -195,6 +323,8 @@
                 }
 
                 renderCalendar() {
+                    const eventT = this;
+                    let pitfallList = new Set();
                     const year = this.currentDate.getFullYear();
                     const month = this.currentDate.getMonth();
 
@@ -238,13 +368,15 @@
                         const lunarEl = document.createElement('div');
                         lunarEl.classList.add('lunar-day');
                         lunarEl.textContent = `${lunar.month}.${lunar.day}`;
-
+                        const tideName = this.getTide(lunar.day);
+                        pitfallList.add(tideName);
                         const phaseIndicatorEl = document.createElement('span');
                         phaseIndicatorEl.classList.add('sea-tide-phase');
-                        phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                        phaseIndicatorEl.textContent = `(${tideName})`;
                         lunarEl.appendChild(phaseIndicatorEl);
 
 
+                        emptyDay.dataset.tide = tideName;
                         emptyDay.appendChild(lunarEl);
 
 
@@ -272,14 +404,17 @@
                         lunarEl.classList.add('lunar-day');
                         lunarEl.textContent = `${lunar.month}.${lunar.day}`;
 
+                        const tideName = this.getTide(lunar.day);
+                        pitfallList.add(tideName);
                         const phaseIndicatorEl = document.createElement('span');
                         phaseIndicatorEl.classList.add('sea-tide-phase');
-                        phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                        phaseIndicatorEl.textContent = `(${tideName})`;
                         lunarEl.appendChild(phaseIndicatorEl);
 
 
                         dayEl.appendChild(lunarEl);
 
+                        dayEl.dataset.tide = tideName;
                         dayEl.dataset.date = date;
                         dayEl.dataset.lastDay = lastDate;
                         dayEl.dataset.dateCount = dateCount;
@@ -315,18 +450,64 @@
                             lunarEl.classList.add('lunar-day');
                             lunarEl.textContent = `${lunar.month}.${lunar.day}`;
 
+                            const tideName = this.getTide(lunar.day);
+                            pitfallList.add(tideName);
+
                             const phaseIndicatorEl = document.createElement('span');
                             phaseIndicatorEl.classList.add('sea-tide-phase');
-                            phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                            phaseIndicatorEl.textContent = `(${tideName})`;
                             lunarEl.appendChild(phaseIndicatorEl);
 
 
+                            emptyDay.dataset.tide = tideName;
                             emptyDay.appendChild(lunarEl);
 
 
                             this.calendarGrid.appendChild(emptyDay);
                         }
                     }
+
+                    // Set을 배열로 변환
+                    let pitfallArray = Array.from(pitfallList);
+
+                    // 배열을 정렬
+                    pitfallArray.sort((a, b) => {
+                        // 숫자 부분 추출
+                        let numA = parseInt(a.match(/^\d+/)) || 0; // 숫자가 없으면 0으로 처리
+                        let numB = parseInt(b.match(/^\d+/)) || 0; // 숫자가 없으면 0으로 처리
+
+                        // 숫자 기준으로 정렬
+                        if (numA !== numB) {
+                            return numA - numB;
+                        }
+
+                        // 숫자가 같다면 문자열 기준으로 정렬
+                        return a.localeCompare(b);
+                    });
+
+                    // 정렬된 배열을 다시 Set으로 변환
+                    // pitfallArray.reverse();
+                    pitfallList = new Set(pitfallArray);
+                    const listElement = document.getElementById('pitfall-list');
+                    document.getElementById('pitfall-list')?.replaceChildren();
+
+                    pitfallList.forEach(value => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = value;
+                        listItem.addEventListener('click', function(e) { eventT.tidePick(e); });
+                        listElement.appendChild(listItem);
+                    });
+
+                    // 모든 calendar-day 클래스를 가진 요소를 선택합니다.
+                    const calendarDays = document.querySelectorAll('.calendar-day');
+                    const firstCalendarDay = this.calendarGrid.querySelectorAll('.calendar-day[data-date="1"]')[0];
+
+                    // 마지막 요소를 찾습니다.
+                    const lastCalendarDay = calendarDays[calendarDays.length - 1];
+
+                    // 마지막 요소에 새로운 클래스를 추가합니다.
+                    if (firstCalendarDay) firstCalendarDay.classList.add('start');
+                    if (lastCalendarDay) lastCalendarDay.classList.add('goal');
                 }
 
                 setupEventListeners() {
@@ -334,6 +515,40 @@
                     this.nextMonthBtn.addEventListener('click', () => this.changeMonth(1));
                     this.addPlayerBtn.addEventListener('click', () => this.addPlayer());
                     this.removePlayerBtn.addEventListener('click', () => this.removePlayer());
+                    this.pitfallPickBtn.addEventListener('click', () => this.pitfallPick());
+
+                }
+
+                pitfallEventListeners() {
+                    const eventT = this;
+                    document.getElementById('overlay').addEventListener('click', function(event) {
+                        if (event.target === this) {
+                            this.style.display = 'none';
+                        }
+                    });
+                    document.getElementById('closeBtn').addEventListener('click', function() { document.getElementById('overlay').style.display = 'none'; });
+                }
+
+                tidePick(e) {
+                    const tideElements = document.querySelectorAll(`[data-tide="${e.target.textContent}"]`);
+                    if(e.target.classList.contains('selected')) {
+                        e.target.classList.remove('selected');
+                        tideElements.forEach(element => { element.classList.remove('selected'); });
+                        this.pitfalls.delete(e.target.textContent);
+                    } else {
+                        e.target.classList.add('selected');
+                        tideElements.forEach(element => { element.classList.add('selected'); });
+                        this.pitfalls.add(e.target.textContent);
+                    }
+                    const startTideElements = tideElements[0];
+                    if (startTideElements.classList.contains('start')) {
+                        startTideElements.classList.remove('selected');
+                    }
+                    const lastTideElements = tideElements[tideElements.length - 1];
+                    if (lastTideElements.classList.contains('goal')) {
+                        lastTideElements.classList.remove('selected');
+                    }
+
                 }
 
                 changeMonth(delta) {
@@ -365,6 +580,10 @@
                     this.updatePlayerCount();
                 }
 
+                pitfallPick() {
+                    document.getElementById('overlay').style.display = 'flex';
+                }
+
                 setupPlayerDrag(player) {
                     let isDragging = false;
                     let startX, startY;
@@ -393,13 +612,11 @@
                     };
 
                     const endDrag = (e) => {
+                        if(isDragging && this.pitfalls.has(player.parentNode.dataset.tide) && player.parentNode.dataset.date > 1) {
+                            playVideo();
+                        }
                         isDragging = false;
                         player.style.cursor = 'grab';
-
-                        // if(player.parentNode.dataset.date == player.parentNode.dataset.lastDay) {
-                        //     alert("이 이겼습니다!!");
-                        // }
-
                     };
 
                     player.addEventListener('mousedown', startDrag);
