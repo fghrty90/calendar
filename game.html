@@ -411,12 +411,13 @@
                     let playEl = document.querySelector(`[data-player="${playing}"]`);
                     const dateCount = playEl.parentNode.dataset.dateCount*1;
                     const pitfalls = this.pitfalls;
-                    for (let index = 1; index <= this.diceVal; index++) {
+                    const diceVal = this.diceVal;
+                    for (let index = 1; index <= diceVal; index++) {
                         setTimeout(() => {
                             setTimeout(() => {
                                 document.querySelector(`.calendar-day[data-date-count="${dateCount+index}"]`)?.appendChild(playEl);
                                 playEl = document.querySelector(`[data-player="${playing}"]`);
-                                if(pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1) {
+                                if(index == diceVal && pitfalls.has(playEl.parentNode.dataset.tide) && playEl.parentNode.dataset.dateCount > 1) {
                                     showGif();
                                     const start = document.querySelectorAll('.start');
                                     start[0].appendChild(playEl);
