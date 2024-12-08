@@ -201,7 +201,7 @@
                     const firstDay = new Date(year, month, 1);
                     const lastDay = new Date(year, month + 1, 0);
                     const beforeDaysOfMonth = new Date(year, month, 0);
-
+                    const nextDaysOfMonth = new Date(year, month + 1, 1);
                     this.currentMonthElement.textContent = `${year}년 ${month + 1}월`;
                     this.calendarGrid.innerHTML = '';
 
@@ -221,18 +221,36 @@
                     for (let i = 0; i < firstDay.getDay(); i++) {
                         const emptyDay = document.createElement('div');
                         emptyDay.classList.add('calendar-day','before-day');
-
+                        const date = beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1);
                         const numberEl = document.createElement('div');
-                        numberEl.textContent = `${beforeDaysOfMonth.getDate() - firstDay.getDay() + (i + 1)}`;
+                        numberEl.textContent = `${date}`;
                         numberEl.classList.add('day-number');
 
                         emptyDay.dataset.dateCount = dateCount;
                         dateCount++;
                         emptyDay.appendChild(numberEl);
 
+                        const calendar = new KoreanLunarCalendar();
+                        calendar.setSolarDate(beforeDaysOfMonth.getFullYear(), beforeDaysOfMonth.getMonth()+1, date);
+
+                        const lunar = calendar.getLunarCalendar();
+
+                        const lunarEl = document.createElement('div');
+                        lunarEl.classList.add('lunar-day');
+                        lunarEl.textContent = `${lunar.month}.${lunar.day}`;
+
+                        const phaseIndicatorEl = document.createElement('span');
+                        phaseIndicatorEl.classList.add('sea-tide-phase');
+                        phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                        lunarEl.appendChild(phaseIndicatorEl);
+
+
+                        emptyDay.appendChild(lunarEl);
+
 
                         this.calendarGrid.appendChild(emptyDay);
                     }
+
                     const lastDate = lastDay.getDate();
 
                     for (let date = 1; date <= lastDate; date++) {
@@ -247,6 +265,7 @@
 
                         const calendar = new KoreanLunarCalendar();
                         calendar.setSolarDate(year, month+ 1, date);
+
                         const lunar = calendar.getLunarCalendar();
 
                         const lunarEl = document.createElement('div');
@@ -266,6 +285,47 @@
                         dayEl.dataset.dateCount = dateCount;
                         dateCount++;
                         this.calendarGrid.appendChild(dayEl);
+                    }
+
+                    //다음달 표시
+                    const gridContainer = document.getElementById('calendar-grid');
+                    const gridStyles = window.getComputedStyle(gridContainer);
+                    const columnCount = gridStyles.getPropertyValue('grid-template-columns').split(' ').length;
+                    const itemCount = gridContainer.getElementsByClassName('calendar-day').length;
+                    const remainingCount = columnCount - (itemCount % columnCount);
+                    if(remainingCount < 7) {
+                        for (let date = 1; date <= remainingCount; date++) {
+                            const emptyDay = document.createElement('div');
+                            emptyDay.classList.add('calendar-day','before-day');
+
+                            const numberEl = document.createElement('div');
+                            numberEl.textContent = `${date}`;
+                            numberEl.classList.add('day-number');
+
+                            emptyDay.dataset.dateCount = dateCount;
+                            dateCount++;
+                            emptyDay.appendChild(numberEl);
+
+                            const calendar = new KoreanLunarCalendar();
+                            calendar.setSolarDate(nextDaysOfMonth.getFullYear(), nextDaysOfMonth.getMonth()+1, date);
+
+                            const lunar = calendar.getLunarCalendar();
+
+                            const lunarEl = document.createElement('div');
+                            lunarEl.classList.add('lunar-day');
+                            lunarEl.textContent = `${lunar.month}.${lunar.day}`;
+
+                            const phaseIndicatorEl = document.createElement('span');
+                            phaseIndicatorEl.classList.add('sea-tide-phase');
+                            phaseIndicatorEl.textContent = `(${this.getTide(lunar.day)})`;
+                            lunarEl.appendChild(phaseIndicatorEl);
+
+
+                            emptyDay.appendChild(lunarEl);
+
+
+                            this.calendarGrid.appendChild(emptyDay);
+                        }
                     }
                 }
 
@@ -303,7 +363,6 @@
 
                     this.players.push(player);
                     this.updatePlayerCount();
-                    console.log("?");
                 }
 
                 setupPlayerDrag(player) {
