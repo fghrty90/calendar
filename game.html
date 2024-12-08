@@ -440,7 +440,7 @@
                     }
                      alert(this.playing);
                     // selected
-                    document.querySelector(`[data-player="${this.playing}"]`).classList.add('selected');
+                    document.querySelector(`[data-player="${this.playing}"]`)?.classList.add('selected');
                     document.getElementById('dice-throw').style.display = 'none';
                 }
                 throw() {
