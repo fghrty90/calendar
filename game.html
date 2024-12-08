@@ -205,13 +205,13 @@
                     this.currentMonthElement.textContent = `${year}년 ${month + 1}월`;
                     this.calendarGrid.innerHTML = '';
 
-                    const days = ['일SUN', '월MON', '화TUE', '수WED', '목THU', '금FRI', '토SAT'];
+                    const days = ['일 SUN', '월 MON', '화 TUE', '수 WED', '목 THU', '금 FRI', '토 SAT'];
                     days.forEach(day => {
                         const dayEl = document.createElement('div');
                         dayEl.textContent = day;
                         dayEl.classList.add('calendar-day','weekday');
-                        if(day == '일SUN') dayEl.classList.add('first-day');
-                        if(day == '토SAT') dayEl.classList.add('last-day');
+                        if(day == '일 SUN') dayEl.classList.add('first-day');
+                        if(day == '토 SAT') dayEl.classList.add('last-day');
 
                         this.calendarGrid.appendChild(dayEl);
                     });
