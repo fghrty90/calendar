@@ -412,6 +412,11 @@
                     const dateCount = playEl.parentNode.dataset.dateCount*1;
                     const pitfalls = this.pitfalls;
                     const diceVal = this.diceVal;
+                    
+                    document.querySelectorAll('.player').forEach(function(el) {
+                        el.classList.remove('selected');
+                    });
+                    
                     for (let index = 1; index <= diceVal; index++) {
                         setTimeout(() => {
                             setTimeout(() => {
@@ -427,12 +432,14 @@
                             }, 150);
                         }, index * 300);
                     }
-
+                    
                     if(playing >= this.players.length) {
                         this.playing = 0;
                     } else {
                         this.playing = playing;
                     }
+                    // selected
+                    document.querySelector(`[data-player="${this.playing}"]`).classList.add('selected');
                     document.getElementById('dice-throw').style.display = 'none';
                 }
                 throw() {
