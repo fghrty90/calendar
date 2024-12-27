@@ -372,6 +372,7 @@
                 }
 
                 changeMonth(delta) {
+                    this.pitfalls = new Set();
                     this.currentDate.setMonth(this.currentDate.getMonth() + delta);
                     this.renderCalendar();
                     this.adjustLayout();
