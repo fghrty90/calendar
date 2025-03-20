@@ -3,28 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>3D 달력 보드게임 (예쁜 배 3종)</title>
+  <title>3D 달력 보드게임 (참고 이미지 스타일 배)</title>
   <style>
     body {
-      margin: 0; overflow: hidden;
+      margin: 0; 
+      overflow: hidden;
       background: #87ceeb; /* 하늘색 배경 */
       font-family: 'Arial', sans-serif;
     }
     /* 상단 UI */
     #ui-container {
-      position: absolute; top: 10px; left: 50%;
+      position: absolute; 
+      top: 10px; 
+      left: 50%;
       transform: translateX(-50%);
-      display: flex; gap: 10px;
+      display: flex; 
+      gap: 10px;
       z-index: 10;
     }
     button {
-      background: #0f3460; color: #fff; border: none;
-      padding: 10px 15px; font-size: 16px; cursor: pointer;
-      border-radius: 5px; transition: 0.3s;
+      background: #0f3460; 
+      color: #fff; 
+      border: none;
+      padding: 10px 15px; 
+      font-size: 16px; 
+      cursor: pointer;
+      border-radius: 5px; 
+      transition: 0.3s;
     }
-    button:hover { background: #00c3ff; }
-    /* Three.js 전체화면 (두 개의 뷰포트로 사용) */
-    canvas { display: block; }
+    button:hover {
+      background: #00c3ff;
+    }
+    /* Three.js 전체화면 */
+    canvas { 
+      display: block; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+    }
   </style>
 </head>
 <body>
@@ -43,34 +61,32 @@
     /********************************************************
      * 전역 변수 및 기본 설정
      ********************************************************/
-    let scene, renderer;
-    let mainCamera, miniMapCamera;
-    let boardGroup;          // 보드 전체(타일) 그룹
-    let tiles = [];          // 31칸 달력 타일
+    let scene, camera, renderer;
+    let boardGroup;          // 달력 보드 전체(타일) 그룹
+    let tiles = [];          // 31칸 달력 타일 Mesh
     let players = [];        // 여러 플레이어(배) 객체
     let playerPositions = [];  
     let currentPlayerIndex = 0;
     let waveTime = 0;
 
-    const ROWS = 5;          // 달력 5주 (최대 31일)
-    const COLS = 7;          // 일~토 7일
-    const DAYS = 31;         // 최대 31일
-    const TILE_SIZE = 8;     // 각 타일 간 간격 (크게)
-    const MAX_PLAYERS = 6;   // 필요시 플레이어 수 늘려도 됨
+    const ROWS = 5;         // 달력 5주 (최대 31일)
+    const COLS = 7;         // 일~토 7일
+    const DAYS = 31;        // 최대 31일
+    const TILE_SPACING = 10; // 타일 간격 (크게 잡아 배가 움직일 공간 확보)
+    const MAX_PLAYERS = 6;  // 필요하면 늘릴 수 있음
 
-    // 달력 요일 이름
+    // 요일 배열
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-    // 1~31 일자에 따라 CanvasTexture 생성 시 사용할 색상(일요일, 토요일 구분)
-    // 여기서는 별도 구분 없이 Canvas에서 처리
 
-    // 3가지 예쁜 배 모양(색상) 세트 (참고 이미지 스타일)
-    // 1) 빨강 + 흰색 상층
-    // 2) 노랑 + 파랑 상층
-    // 3) 청록 + 노랑 상층
+    // 플레이어마다 배 색상 세트 (선체/객실/강조색)
+    // 원하는 만큼 늘려도 됨
     const boatSets = [
-      { hullColor: 0xff0000, cabinColor: 0xffffff, accentColor: 0xcccccc },
-      { hullColor: 0xffdd00, cabinColor: 0x0066ff, accentColor: 0xff6600 },
-      { hullColor: 0x00cccc, cabinColor: 0xffdd00, accentColor: 0x0066ff }
+      { hullColor: 0xff0000, cabinColor: 0xffffff, accentColor: 0xdddddd }, // 빨강 배
+      { hullColor: 0xffdd00, cabinColor: 0x0066ff, accentColor: 0xff6600 }, // 노랑+파랑
+      { hullColor: 0x00cccc, cabinColor: 0xffdd00, accentColor: 0x0066ff }, // 청록+노랑
+      { hullColor: 0x00aa00, cabinColor: 0xffffff, accentColor: 0x555555 }, // 초록
+      { hullColor: 0xaa00aa, cabinColor: 0xffdddd, accentColor: 0x333333 }, // 보라
+      { hullColor: 0xff6600, cabinColor: 0xffffff, accentColor: 0x333333 }, // 주황
     ];
 
     /********************************************************
@@ -81,14 +97,11 @@
       scene.background = new THREE.Color(0x87ceeb);
 
       // 메인 카메라
-      mainCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-      mainCamera.position.set(0, 100, 100);
-      mainCamera.lookAt(0, 0, 0);
-
-      // 미니맵 카메라 (Top-Down)
-      miniMapCamera = new THREE.OrthographicCamera(-150, 150, 75, -75, 1, 1000);
-      miniMapCamera.position.set(0, 300, 0);
-      miniMapCamera.lookAt(0, 0, 0);
+      camera = new THREE.PerspectiveCamera(
+        75, window.innerWidth / window.innerHeight, 0.1, 2000
+      );
+      camera.position.set(0, 80, 80);
+      camera.lookAt(0, 0, 0);
 
       // 렌더러
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -99,26 +112,28 @@
       const ambient = new THREE.AmbientLight(0xffffff, 0.7);
       scene.add(ambient);
       const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-      dirLight.position.set(100, 200, 100);
+      dirLight.position.set(50, 100, 50);
       scene.add(dirLight);
 
       // 보드 그룹
       boardGroup = new THREE.Group();
       scene.add(boardGroup);
 
-      // 달력 보드 생성
+      // 달력 보드 생성 (31칸)
       createCalendarBoard();
 
-      // 보드 크기에 맞춰 카메라 자동 조정
+      // 보드 전체 크기에 맞춰 카메라 자동 조정
       fitCameraToBoard();
 
       // 이벤트
       window.addEventListener('resize', onWindowResize);
+
+      // 메인 루프
       animate();
     }
 
     /********************************************************
-     * 3D 달력 보드 생성 (31칸) + 날짜/요일 텍스처
+     * 달력 보드(31칸) 생성 + 날짜·요일 표시
      ********************************************************/
     function createCalendarBoard() {
       let dayCount = 1;
@@ -126,14 +141,14 @@
         for (let col = 0; col < COLS; col++) {
           if (dayCount > DAYS) break;
 
-          // 타일 생성 (BoxGeometry)
-          const tileGeo = new THREE.BoxGeometry(6, 0.5, 6);
+          // 타일 생성
+          const tileGeo = new THREE.BoxGeometry(8, 0.5, 8);
           const tileMat = createTileMaterial(dayCount, dayNames[col]);
           const tile = new THREE.Mesh(tileGeo, tileMat);
 
-          // 위치
-          const xPos = (col - 3) * TILE_SIZE;
-          const zPos = -(row - 2) * TILE_SIZE;
+          // 타일 위치 (z축 방향이 "앞"이 되도록 +Z)
+          const xPos = (col - 3) * TILE_SPACING;
+          const zPos = row * TILE_SPACING; // 0~4, 점점 +Z 쪽으로
           tile.position.set(xPos, 0, zPos);
 
           boardGroup.add(tile);
@@ -144,16 +159,15 @@
       }
     }
 
-    /* CanvasTexture를 이용해 날짜+요일 표시 텍스처 만들기 */
+    /* CanvasTexture로 날짜+요일 표시 */
     function createTileMaterial(dayNumber, dayName) {
-      const size = 128;
+      const size = 256;
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
 
-      // 배경색
-      // 일요일( dayName==="일" ) 빨강, 토요일( dayName==="토" ) 파랑, 나머지 흰색
+      // 배경색 (일요일/토요일 구분)
       if (dayName === "일") ctx.fillStyle = "#ff5757";
       else if (dayName === "토") ctx.fillStyle = "#579eff";
       else ctx.fillStyle = "#ffffff";
@@ -161,99 +175,102 @@
 
       // 테두리
       ctx.strokeStyle = "#ccc";
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 6;
       ctx.strokeRect(0, 0, size, size);
 
-      // 글자색 (일/토는 흰색, 평일은 검정)
+      // 텍스트 (일/토는 흰색, 평일은 검정)
       ctx.fillStyle = (dayName === "일" || dayName === "토") ? "#ffffff" : "#000000";
-      ctx.font = "bold 40px Arial";
       ctx.textAlign = "center";
+      // 날짜
+      ctx.font = "bold 60px Arial";
       ctx.fillText(dayNumber.toString(), size / 2, size / 2);
 
-      ctx.font = "24px Arial";
-      ctx.fillText(dayName, size / 2, (size / 2) + 34);
+      // 요일
+      ctx.font = "40px Arial";
+      ctx.fillText(dayName, size / 2, (size / 2) + 50);
 
       const texture = new THREE.CanvasTexture(canvas);
       return new THREE.MeshStandardMaterial({ map: texture });
     }
 
     /********************************************************
-     * 보드 전체 BoundingBox → 카메라 맞춤
+     * 보드 전체 크기 → 카메라 맞춤
      ********************************************************/
     function fitCameraToBoard() {
-      const boundingBox = new THREE.Box3().setFromObject(boardGroup);
-      const size = boundingBox.getSize(new THREE.Vector3());
-      const center = boundingBox.getCenter(new THREE.Vector3());
+      const bbox = new THREE.Box3().setFromObject(boardGroup);
+      const size = bbox.getSize(new THREE.Vector3());
+      const center = bbox.getCenter(new THREE.Vector3());
 
-      // 메인 카메라 세팅
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = mainCamera.fov * (Math.PI / 180);
+      // 카메라 세팅 (보드를 다 볼 수 있도록)
+      const maxDim = Math.max(size.x, size.z);
+      const fov = camera.fov * (Math.PI / 180);
       let cameraDist = maxDim / (2 * Math.tan(fov / 2));
       cameraDist *= 1.3;
-      mainCamera.position.set(center.x, cameraDist, center.z + cameraDist);
-      mainCamera.lookAt(center);
+      camera.position.set(center.x, cameraDist, center.z - cameraDist);
+      camera.lookAt(center);
     }
 
     /********************************************************
-     * 예쁜 배 3종 (앞부분 약간 뾰족 or 다양한 디자인)
+     * 배(참고 이미지처럼) - 앞부분 뾰족, +Z가 전진 방향
      ********************************************************/
     function createBoat(playerIndex) {
-      // 3가지 세트 중 순환 선택
+      // 색상 세트 선택
       const setIndex = playerIndex % boatSets.length;
       const { hullColor, cabinColor, accentColor } = boatSets[setIndex];
 
-      // 그룹
       const group = new THREE.Group();
-      group.scale.set(1.2, 1.2, 1.2);
+      group.scale.set(1.4, 1.4, 1.4); // 크기 키우기
 
-      // 선체 (앞부분 살짝 뾰족: Cone + Cylinder 합성)
-      const frontGeo = new THREE.ConeGeometry(1.5, 3, 16);
+      // 1) 앞부분(뾰족) - Cone (축: +Z)
+      //   → 기본적으로 Cone은 Y축 기준이므로 회전해서 Z축 앞쪽
+      const frontGeo = new THREE.ConeGeometry(2, 4, 16);
       const frontMat = new THREE.MeshStandardMaterial({ color: hullColor });
       const front = new THREE.Mesh(frontGeo, frontMat);
-      front.rotation.x = Math.PI / 2;
-      front.position.z = 1.5;
+      front.rotation.x = Math.PI / 2;  // 세로 → 앞
+      front.position.z = 2;
       group.add(front);
 
-      const backGeo = new THREE.CylinderGeometry(1.5, 1.5, 3, 16);
+      // 2) 뒷부분(원통형) - Cylinder
+      const backGeo = new THREE.CylinderGeometry(2, 2, 4, 16);
       const backMat = new THREE.MeshStandardMaterial({ color: hullColor });
       const back = new THREE.Mesh(backGeo, backMat);
       back.rotation.x = Math.PI / 2;
       back.position.z = -0.1;
       group.add(back);
 
-      // 테두리 (Torus)
-      const rimGeo = new THREE.TorusGeometry(1.5, 0.15, 8, 16);
+      // 3) 테두리(토러스) - 오렌지 등 강조색
+      const rimGeo = new THREE.TorusGeometry(2, 0.15, 8, 16);
       const rimMat = new THREE.MeshStandardMaterial({ color: accentColor });
       const rim = new THREE.Mesh(rimGeo, rimMat);
       rim.rotation.x = Math.PI / 2;
       rim.position.z = -0.1;
       group.add(rim);
 
-      // 상층부(객실)
-      const cabinGeo = new THREE.BoxGeometry(2, 1.4, 1.5);
+      // 4) 상층부(객실)
+      const cabinGeo = new THREE.BoxGeometry(2.5, 1.5, 2);
       const cabinMat = new THREE.MeshStandardMaterial({ color: cabinColor });
       const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-      cabin.position.set(0, 1.8, -0.3);
+      cabin.position.set(0, 2, -0.5);
       group.add(cabin);
 
-      // 창문
-      const windowGeo = new THREE.CircleGeometry(0.25, 8);
+      // 5) 창문
+      const windowGeo = new THREE.CircleGeometry(0.3, 8);
       const windowMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
       for (let i = -0.3; i <= 0.3; i += 0.3) {
         const wMesh = new THREE.Mesh(windowGeo, windowMat);
         wMesh.rotation.y = Math.PI / 2;
-        wMesh.position.set(1.3, 1.8, i - 0.3);
+        wMesh.position.set(2, 2, i - 0.5);
         group.add(wMesh);
       }
 
-      // 돛대
-      const mastGeo = new THREE.CylinderGeometry(0.05, 0.05, 2.5, 8);
+      // 6) 돛대
+      const mastGeo = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
       const mastMat = new THREE.MeshStandardMaterial({ color: accentColor });
       const mast = new THREE.Mesh(mastGeo, mastMat);
-      mast.position.set(0, 2.5, -0.3);
+      mast.position.set(0, 3, -0.5);
       group.add(mast);
 
-      // 시작 위치 (tiles[0])
+      // 시작 위치 (tiles[0] 위)
       if (tiles[0]) {
         group.position.set(tiles[0].position.x, 1, tiles[0].position.z);
       }
@@ -266,14 +283,14 @@
      ********************************************************/
     function addPlayer() {
       if (players.length >= MAX_PLAYERS) {
-        alert("플레이어가 너무 많아요!");
+        alert("플레이어가 너무 많습니다!");
         return;
       }
       const boat = createBoat(players.length);
       scene.add(boat);
       players.push(boat);
       playerPositions.push(0);
-      currentPlayerIndex = 0; // 첫 플레이어로 세팅
+      currentPlayerIndex = 0;
     }
 
     function removePlayer() {
@@ -298,7 +315,7 @@
       playerPositions[idx] = Math.min(playerPositions[idx] + diceValue, tiles.length - 1);
       moveBoat(idx);
 
-      // 다음 플레이어
+      // 다음 플레이어로 턴 넘김
       currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
     }
 
@@ -314,12 +331,12 @@
     }
 
     /********************************************************
-     * 메인 루프
+     * 메인 루프 (물결 효과)
      ********************************************************/
     function animate() {
       requestAnimationFrame(animate);
 
-      // 물결(흔들림) 효과
+      // 배가 물결처럼 흔들리도록
       waveTime += 0.02;
       players.forEach((boat, i) => {
         boat.rotation.x = Math.sin(waveTime + i) * 0.03;
@@ -327,30 +344,7 @@
       });
 
       TWEEN.update();
-      renderViews();
-    }
-
-    /********************************************************
-     * 메인뷰 + 미니맵
-     ********************************************************/
-    function renderViews() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      // 메인 카메라 (전체)
-      renderer.setViewport(0, 0, w, h);
-      renderer.setScissor(0, 0, w, h);
-      renderer.setScissorTest(true);
-      renderer.render(scene, mainCamera);
-
-      // 미니맵 (오른쪽 상단 1/4)
-      const miniW = w / 4;
-      const miniH = h / 4;
-      renderer.setViewport(w - miniW - 10, h - miniH - 10, miniW, miniH);
-      renderer.setScissor(w - miniW - 10, h - miniH - 10, miniW, miniH);
-      renderer.setScissorTest(true);
-      miniMapCamera.lookAt(boardGroup.position);
-      renderer.render(scene, miniMapCamera);
+      renderer.render(scene, camera);
     }
 
     /********************************************************
@@ -358,8 +352,8 @@
      ********************************************************/
     function onWindowResize() {
       renderer.setSize(window.innerWidth, window.innerHeight);
-      mainCamera.aspect = window.innerWidth / window.innerHeight;
-      mainCamera.updateProjectionMatrix();
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
     }
 
     // 시작
