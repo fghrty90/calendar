@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>3D 달력 보드게임 (통합형)</title>
+  <title>3D 달력 보드게임 (멀티플레이)</title>
   <style>
     body {
       margin: 0;
@@ -11,53 +11,62 @@
       background: #87ceeb; /* 하늘색 배경 */
       font-family: 'Arial', sans-serif;
     }
-    #rollButton {
+    /* 상단 UI 컨테이너 */
+    #ui-container {
       position: absolute;
       top: 10px; left: 50%;
       transform: translateX(-50%);
+      display: flex; gap: 10px;
       z-index: 10;
-      padding: 12px 20px;
-      font-size: 16px;
-      background: #0f3460; color: #fff;
-      border: none; border-radius: 5px;
-      cursor: pointer; transition: 0.3s;
     }
-    #rollButton:hover {
-      background: #00c3ff;
+    button {
+      background: #0f3460; color: #fff; border: none;
+      padding: 10px 15px; font-size: 16px; cursor: pointer;
+      border-radius: 5px; transition: 0.3s;
     }
+    button:hover { background: #00c3ff; }
+
+    /* Three.js 전체 화면 */
     canvas {
       display: block;
-      position: fixed; /* 화면에 고정 */
+      position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      z-index: 1; /* 버튼보다 뒤 */
+      z-index: 1;
     }
   </style>
 </head>
 <body>
-  <!-- 주사위 굴리기 버튼 -->
-  <button id="rollButton">🎲 주사위 굴리기</button>
+  <!-- 상단 버튼들 (플레이어 추가/삭제, 주사위 굴리기) -->
+  <div id="ui-container">
+    <button onclick="addPlayer()">플레이어 추가</button>
+    <button onclick="removePlayer()">플레이어 삭제</button>
+    <button onclick="rollDice()">주사위 굴리기</button>
+  </div>
 
   <!-- Three.js & TWEEN.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 
   <script>
+    /* 전역 변수 */
     let scene, camera, renderer;
-    let tiles = [];          // 31칸 달력(3D 보드)
-    let boat;                // 배(여객선) 모델
-    let boatIndex = 0;       // 현재 배가 위치한 타일 인덱스
-    let waveTime = 0;        // 물결 효과용 시간
+    let tiles = [];                 // 3D 달력 칸(31칸)
+    let players = [];               // 여러 플레이어(배) 오브젝트
+    let playerPositions = [];       // 각 플레이어의 보드 인덱스
+    let currentPlayerIndex = 0;     // 현재 턴인 플레이어
+    let waveTime = 0;              // 물결 효과
 
-    const ROWS = 5;          // 달력 5주 (최대 31일까지 가정)
-    const COLS = 7;          // 한 주에 7일 (일~토)
-    const DAYS = 31;         // 달력 일수
-    const TILE_SIZE = 4;     // 각 타일 간 간격 (3D 공간상)
+    const ROWS = 5;                // 달력 5주 (최대 31일까지)
+    const COLS = 7;                // 한 주 7일 (일~토)
+    const DAYS = 31;               // 최대 31일
+    const TILE_SIZE = 4;           // 각 칸 간격
+    const MAX_PLAYERS = 4;         // 최대 플레이어 수
 
-    // 초기화
+    /* 초기화 */
     function init() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x87ceeb); // 하늘색
+      scene.background = new THREE.Color(0x87ceeb); // 하늘색 배경
 
       // 카메라
       camera = new THREE.PerspectiveCamera(
@@ -78,50 +87,43 @@
       dirLight.position.set(10, 20, 10);
       scene.add(dirLight);
 
-      // 달력 보드 생성
+      // 3D 달력 보드 생성
       createCalendarBoard();
-
-      // 배(여객선) 생성
-      createBoat();
 
       // 이벤트
       window.addEventListener('resize', onWindowResize);
-      document.getElementById('rollButton').addEventListener('click', rollDice);
 
       // 애니메이션 시작
       animate();
     }
 
-    // 3D 달력 보드 생성 (31칸)
+    /* 3D 달력 보드 (31칸) 생성 */
     function createCalendarBoard() {
       const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-
       let dayCount = 1;
+
       for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
           if (dayCount > DAYS) break;
 
+          // 날짜 & 요일
+          const dayName = dayNames[col];
+          // 타일 텍스처 생성
+          const tileMat = createTileMaterial(dayCount, dayName, col);
+
           // 바닥 타일 (BoxGeometry)
           const tileGeo = new THREE.BoxGeometry(3.5, 0.5, 3.5);
-          let tileColor = 0xffffff;
-          if (col === 0) tileColor = 0xff5757;   // 일요일(빨간색)
-          if (col === 6) tileColor = 0x579eff;   // 토요일(파란색)
-
-          const tileMat = new THREE.MeshStandardMaterial({ color: tileColor });
           const tileMesh = new THREE.Mesh(tileGeo, tileMat);
 
-          // 3D 공간에서의 위치 계산
-          // (col - 3) * TILE_SIZE => 중앙정렬
-          // (row - 2) * TILE_SIZE => 중앙정렬
+          // 위치 계산 (가운데 정렬)
           const xPos = (col - 3) * TILE_SIZE;
-          const zPos = - (row - 2) * TILE_SIZE;
+          const zPos = -(row - 2) * TILE_SIZE;
           tileMesh.position.set(xPos, 0, zPos);
 
           scene.add(tileMesh);
           tiles.push({
             mesh: tileMesh,
-            dayNumber: dayCount,
-            dayName: dayNames[col]  // 요일 이름
+            index: dayCount
           });
 
           dayCount++;
@@ -129,18 +131,55 @@
       }
     }
 
-    // 여객선 모양 배 생성
+    /* Canvas를 이용해 날짜+요일이 표시된 텍스처 생성 */
+    function createTileMaterial(dayNumber, dayName, col) {
+      const size = 128; // 캔버스 크기
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // 배경색 (일요일/토요일 구분)
+      if (col === 0) {
+        ctx.fillStyle = '#ff5757'; // 일요일 빨강
+      } else if (col === 6) {
+        ctx.fillStyle = '#579eff'; // 토요일 파랑
+      } else {
+        ctx.fillStyle = '#ffffff'; // 평일 흰색
+      }
+      ctx.fillRect(0, 0, size, size);
+
+      // 테두리
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(0, 0, size, size);
+
+      // 날짜 & 요일 텍스트
+      ctx.fillStyle = (col === 0 || col === 6) ? '#ffffff' : '#000000';
+      ctx.font = 'bold 36px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(dayNumber, size / 2, size / 2);
+
+      ctx.font = '24px Arial';
+      ctx.fillText(dayName, size / 2, (size / 2) + 30);
+
+      // 텍스처 생성
+      const texture = new THREE.CanvasTexture(canvas);
+      return new THREE.MeshStandardMaterial({ map: texture });
+    }
+
+    /* 여객선 모양의 배 생성 (참고 이미지 비슷하게) */
     function createBoat() {
       const group = new THREE.Group();
 
-      // 1) 파란색 선체 (둥근 보트 하단)
+      // 1) 파란색 선체
       const hullGeo = new THREE.CylinderGeometry(2, 2.5, 5, 16);
       const hullMat = new THREE.MeshStandardMaterial({ color: 0x0077ff });
       const hull = new THREE.Mesh(hullGeo, hullMat);
       hull.rotation.z = Math.PI / 2;
       group.add(hull);
 
-      // 2) 오렌지색 테두리 (배 윗부분)
+      // 2) 오렌지색 테두리 (토러스)
       const rimGeo = new THREE.TorusGeometry(2.5, 0.2, 8, 16);
       const rimMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
       const rim = new THREE.Mesh(rimGeo, rimMat);
@@ -154,7 +193,7 @@
       cabin.position.set(0, 2.5, 0);
       group.add(cabin);
 
-      // 4) 흰색 창문들
+      // 4) 창문 (흰색 원형)
       const windowGeo = new THREE.CircleGeometry(0.3, 16);
       const windowMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
       for (let i = -0.7; i <= 0.7; i += 0.7) {
@@ -164,21 +203,20 @@
         group.add(wMesh);
       }
 
-      // 5) 돛대 + 줄 (간단히 표현)
-      // 돛대(폴)
+      // 5) 돛대 + 줄
       const mastGeo = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
       const mastMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
       const mast = new THREE.Mesh(mastGeo, mastMat);
       mast.position.set(0, 4, 0);
       group.add(mast);
 
-      // 줄 (양쪽 기둥에 연결된 느낌)
+      // 왼쪽/오른쪽 줄
       const lineGeo = new THREE.CylinderGeometry(0.03, 0.03, 3.2, 4);
       const lineMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
       // 왼쪽 줄
       const lineLeft = new THREE.Mesh(lineGeo, lineMat);
       lineLeft.position.set(-1, 2.5, 0);
-      lineLeft.rotation.z = 0.5; // 기울이기
+      lineLeft.rotation.z = 0.5;
       group.add(lineLeft);
       // 오른쪽 줄
       const lineRight = new THREE.Mesh(lineGeo, lineMat);
@@ -186,51 +224,79 @@
       lineRight.rotation.z = -0.5;
       group.add(lineRight);
 
-      // 초기 위치 (tiles[0] 위)
-      boat = group;
-      scene.add(boat);
-      updateBoatPosition();
+      // 초기 위치 (타일 0 위)
+      group.position.set(tiles[0].mesh.position.x, 1, tiles[0].mesh.position.z);
+
+      return group;
     }
 
-    // 주사위 굴리기
-    function rollDice() {
-      const diceValue = Math.floor(Math.random() * 6) + 1;
-      // 배가 이동할 타일 인덱스 계산
-      boatIndex = Math.min(boatIndex + diceValue, tiles.length - 1);
-      updateBoatPosition();
-    }
-
-    // 배 위치 갱신 (TWEEN 애니메이션)
-    function updateBoatPosition() {
-      if (boatIndex < tiles.length) {
-        const targetMesh = tiles[boatIndex].mesh;
-        const targetPos = targetMesh.position.clone();
-        targetPos.y = 1; // 타일 위로 조금 띄우기
-
-        // 부드럽게 이동
-        new TWEEN.Tween(boat.position)
-          .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
-          .easing(TWEEN.Easing.Sinusoidal.InOut)
-          .start();
+    /* 플레이어(배) 추가 */
+    function addPlayer() {
+      if (players.length >= MAX_PLAYERS) {
+        alert('최대 4명까지 가능합니다.');
+        return;
       }
+      const boat = createBoat();
+      scene.add(boat);
+      players.push(boat);
+      playerPositions.push(0);
     }
 
-    // 프레임 루프
+    /* 플레이어(배) 삭제 */
+    function removePlayer() {
+      if (players.length === 0) return;
+      const lastBoat = players.pop();
+      scene.remove(lastBoat);
+      playerPositions.pop();
+      currentPlayerIndex = 0;
+    }
+
+    /* 주사위 굴리기 */
+    function rollDice() {
+      if (players.length === 0) {
+        alert('플레이어를 추가해주세요!');
+        return;
+      }
+      // 현재 플레이어
+      const diceValue = Math.floor(Math.random() * 6) + 1;
+      playerPositions[currentPlayerIndex] = Math.min(
+        playerPositions[currentPlayerIndex] + diceValue,
+        tiles.length - 1
+      );
+      moveBoat(currentPlayerIndex);
+
+      // 턴을 다음 플레이어로
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    }
+
+    /* 해당 플레이어 배 이동 (TWEEN) */
+    function moveBoat(playerIndex) {
+      const targetIndex = playerPositions[playerIndex];
+      const targetPos = tiles[targetIndex].mesh.position.clone();
+      targetPos.y = 1; // 타일 위로 조금 띄우기
+
+      new TWEEN.Tween(players[playerIndex].position)
+        .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
+        .easing(TWEEN.Easing.Sinusoidal.InOut)
+        .start();
+    }
+
+    /* 매 프레임마다 실행 (물결 효과) */
     function animate() {
       requestAnimationFrame(animate);
       waveTime += 0.02;
 
-      // 물결 효과 (살짝 흔들림)
-      if (boat) {
-        boat.rotation.x = Math.sin(waveTime) * 0.05;
-        boat.rotation.z = Math.sin(waveTime * 1.5) * 0.05;
-      }
+      // 모든 배를 물결에 따라 흔들리게
+      players.forEach((boat, i) => {
+        boat.rotation.x = Math.sin(waveTime + i) * 0.05;
+        boat.rotation.z = Math.sin(waveTime * 1.5 + i) * 0.05;
+      });
 
       TWEEN.update();
       renderer.render(scene, camera);
     }
 
-    // 화면 크기 변화 대응
+    /* 창 크기 변화 대응 */
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
