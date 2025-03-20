@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>3D 달력 보드게임 (참고 이미지 스타일 배)</title>
+  <title>3D 달력 보드게임 (예시 배 모양)</title>
   <style>
     body {
       margin: 0; 
@@ -73,21 +73,10 @@
     const COLS = 7;         // 일~토 7일
     const DAYS = 31;        // 최대 31일
     const TILE_SPACING = 10; // 타일 간격 (크게 잡아 배가 움직일 공간 확보)
-    const MAX_PLAYERS = 6;  // 필요하면 늘릴 수 있음
+    const MAX_PLAYERS = 4;  // 필요하면 늘릴 수 있음
 
     // 요일 배열
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-
-    // 플레이어마다 배 색상 세트 (선체/객실/강조색)
-    // 원하는 만큼 늘려도 됨
-    const boatSets = [
-      { hullColor: 0xff0000, cabinColor: 0xffffff, accentColor: 0xdddddd }, // 빨강 배
-      { hullColor: 0xffdd00, cabinColor: 0x0066ff, accentColor: 0xff6600 }, // 노랑+파랑
-      { hullColor: 0x00cccc, cabinColor: 0xffdd00, accentColor: 0x0066ff }, // 청록+노랑
-      { hullColor: 0x00aa00, cabinColor: 0xffffff, accentColor: 0x555555 }, // 초록
-      { hullColor: 0xaa00aa, cabinColor: 0xffdddd, accentColor: 0x333333 }, // 보라
-      { hullColor: 0xff6600, cabinColor: 0xffffff, accentColor: 0x333333 }, // 주황
-    ];
 
     /********************************************************
      * 초기화
@@ -148,7 +137,7 @@
 
           // 타일 위치 (z축 방향이 "앞"이 되도록 +Z)
           const xPos = (col - 3) * TILE_SPACING;
-          const zPos = row * TILE_SPACING; // 0~4, 점점 +Z 쪽으로
+          const zPos = row * TILE_SPACING; // 0행이 z=0, 1행이 z=+10, ...
           tile.position.set(xPos, 0, zPos);
 
           boardGroup.add(tile);
@@ -211,64 +200,79 @@
     }
 
     /********************************************************
-     * 배(참고 이미지처럼) - 앞부분 뾰족, +Z가 전진 방향
+     * 배(참고 이미지처럼), +Z가 전진 방향
      ********************************************************/
-    function createBoat(playerIndex) {
-      // 색상 세트 선택
-      const setIndex = playerIndex % boatSets.length;
-      const { hullColor, cabinColor, accentColor } = boatSets[setIndex];
-
+    function createBoat() {
       const group = new THREE.Group();
-      group.scale.set(1.4, 1.4, 1.4); // 크기 키우기
+      group.scale.set(1.2, 1.2, 1.2);
 
-      // 1) 앞부분(뾰족) - Cone (축: +Z)
-      //   → 기본적으로 Cone은 Y축 기준이므로 회전해서 Z축 앞쪽
-      const frontGeo = new THREE.ConeGeometry(2, 4, 16);
-      const frontMat = new THREE.MeshStandardMaterial({ color: hullColor });
-      const front = new THREE.Mesh(frontGeo, frontMat);
-      front.rotation.x = Math.PI / 2;  // 세로 → 앞
-      front.position.z = 2;
-      group.add(front);
+      // 하단 선체 (밝은 파랑)
+      const bottomHullGeo = new THREE.BoxGeometry(5, 1.5, 8);
+      const bottomHullMat = new THREE.MeshStandardMaterial({ color: 0x1C91F9 });
+      const bottomHull = new THREE.Mesh(bottomHullGeo, bottomHullMat);
+      // 앞부분을 +Z로
+      bottomHull.position.set(0, 0.75, 0);
+      group.add(bottomHull);
 
-      // 2) 뒷부분(원통형) - Cylinder
-      const backGeo = new THREE.CylinderGeometry(2, 2, 4, 16);
-      const backMat = new THREE.MeshStandardMaterial({ color: hullColor });
-      const back = new THREE.Mesh(backGeo, backMat);
-      back.rotation.x = Math.PI / 2;
-      back.position.z = -0.1;
-      group.add(back);
+      // 상단 선체 (진한 파랑)
+      const topHullGeo = new THREE.BoxGeometry(5, 1, 7.5);
+      const topHullMat = new THREE.MeshStandardMaterial({ color: 0x4A9FFD });
+      const topHull = new THREE.Mesh(topHullGeo, topHullMat);
+      topHull.position.set(0, 1.5, -0.2);
+      group.add(topHull);
 
-      // 3) 테두리(토러스) - 오렌지 등 강조색
-      const rimGeo = new THREE.TorusGeometry(2, 0.15, 8, 16);
-      const rimMat = new THREE.MeshStandardMaterial({ color: accentColor });
-      const rim = new THREE.Mesh(rimGeo, rimMat);
-      rim.rotation.x = Math.PI / 2;
-      rim.position.z = -0.1;
-      group.add(rim);
+      // 안쪽(데크) - 회색 바닥
+      const deckGeo = new THREE.BoxGeometry(4, 0.1, 6);
+      const deckMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+      const deck = new THREE.Mesh(deckGeo, deckMat);
+      deck.position.set(0, 2, -0.2);
+      group.add(deck);
 
-      // 4) 상층부(객실)
-      const cabinGeo = new THREE.BoxGeometry(2.5, 1.5, 2);
-      const cabinMat = new THREE.MeshStandardMaterial({ color: cabinColor });
+      // 조타실(캐빈)
+      const cabinGeo = new THREE.BoxGeometry(2, 2, 2);
+      const cabinMat = new THREE.MeshStandardMaterial({ color: 0x6fb4ff });
       const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-      cabin.position.set(0, 2, -0.5);
+      cabin.position.set(0, 3, -1);
       group.add(cabin);
 
-      // 5) 창문
-      const windowGeo = new THREE.CircleGeometry(0.3, 8);
-      const windowMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      for (let i = -0.3; i <= 0.3; i += 0.3) {
-        const wMesh = new THREE.Mesh(windowGeo, windowMat);
-        wMesh.rotation.y = Math.PI / 2;
-        wMesh.position.set(2, 2, i - 0.5);
-        group.add(wMesh);
+      // 굴뚝(펀넬)
+      const funnelGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16);
+      const funnelMat = new THREE.MeshStandardMaterial({ color: 0x607d8b });
+      const funnel = new THREE.Mesh(funnelGeo, funnelMat);
+      funnel.position.set(0, 4, -1);
+      group.add(funnel);
+
+      // 라이프부이 (흰색 도넛) 3개, 오른쪽 측면
+      for (let i = 0; i < 3; i++) {
+        const buoyGeo = new THREE.TorusGeometry(0.3, 0.08, 8, 16);
+        const buoyMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const buoy = new THREE.Mesh(buoyGeo, buoyMat);
+        buoy.rotation.y = Math.PI / 2;
+        buoy.position.set(2.6, 1.8 - (i * 0.5), -1 + i);
+        group.add(buoy);
       }
 
-      // 6) 돛대
-      const mastGeo = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
-      const mastMat = new THREE.MeshStandardMaterial({ color: accentColor });
-      const mast = new THREE.Mesh(mastGeo, mastMat);
-      mast.position.set(0, 3, -0.5);
-      group.add(mast);
+      // 앵커 (회색) 왼쪽 측면 (간단히 Box + Cylinder 조합)
+      const anchorGroup = new THREE.Group();
+      // 본체
+      const anchorBodyGeo = new THREE.BoxGeometry(0.1, 1, 0.1);
+      const anchorBodyMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+      const anchorBody = new THREE.Mesh(anchorBodyGeo, anchorBodyMat);
+      anchorBody.position.set(0, -0.2, 0);
+      anchorGroup.add(anchorBody);
+      // 아래쪽 반원
+      const anchorHookGeo = new THREE.TorusGeometry(0.3, 0.05, 8, 16, Math.PI);
+      const anchorHookMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+      const anchorHook = new THREE.Mesh(anchorHookGeo, anchorHookMat);
+      anchorHook.rotation.x = Math.PI / 2;
+      anchorHook.position.set(0, -0.7, 0);
+      anchorGroup.add(anchorHook);
+
+      anchorGroup.position.set(-2.6, 1.5, -1);
+      group.add(anchorGroup);
+
+      // 배 앞부분을 +Z로 → 이미 Box 등은 기본적으로 +Z가 길이방향
+      // 굳이 회전할 필요 없음. group.rotation.y = 0; (기본)
 
       // 시작 위치 (tiles[0] 위)
       if (tiles[0]) {
@@ -286,7 +290,7 @@
         alert("플레이어가 너무 많습니다!");
         return;
       }
-      const boat = createBoat(players.length);
+      const boat = createBoat();
       scene.add(boat);
       players.push(boat);
       playerPositions.push(0);
@@ -339,6 +343,7 @@
       // 배가 물결처럼 흔들리도록
       waveTime += 0.02;
       players.forEach((boat, i) => {
+        // 앞이 +Z이므로 X/Z 회전으로 흔들림
         boat.rotation.x = Math.sin(waveTime + i) * 0.03;
         boat.rotation.z = Math.sin(waveTime * 1.5 + i) * 0.03;
       });
