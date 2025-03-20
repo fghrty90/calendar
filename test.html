@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D 여객선 달력 보드게임</title>
+    <title>3D 달력 보드게임</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background-color: #1a1a2e; }
+        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background-color: #87CEEB; }
         
         /* UI 스타일 */
         #ui-container {
@@ -18,22 +18,24 @@
         }
         button:hover { background: #00c3ff; }
 
-        /* 캘린더(보드판) 스타일 */
+        /* 보드판 (달력) 스타일 */
         #calendar-container {
             position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-            display: grid; grid-template-columns: repeat(7, 50px); gap: 5px; max-width: 400px; z-index: 10;
+            display: grid; grid-template-columns: repeat(7, 60px); gap: 5px; max-width: 500px; z-index: 10;
         }
         .day {
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            border: 1px solid #ccc; font-size: 14px; background: #fff; border-radius: 5px;
+            width: 60px; height: 60px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border: 1px solid #ccc; font-size: 16px; background: #fff; border-radius: 5px;
         }
         .sunday { background: #ff5757; color: white; }
         .saturday { background: #579eff; color: white; }
+        .day span { font-size: 12px; color: #666; }
 
         /* Three.js 캔버스 */
         canvas {
             display: block;
-            position: absolute; top: 150px; left: 0; width: 100%; height: calc(100% - 150px);
+            position: absolute; top: 160px; left: 0; width: 100%; height: calc(100% - 160px);
             z-index: 1;
         }
     </style>
@@ -57,11 +59,11 @@
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x16213e);
+            scene.background = new THREE.Color(0x87CEEB);
 
             // ✅ 카메라 위치 수정
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 18, 18);
+            camera.position.set(0, 22, 20);
             camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -71,7 +73,7 @@
             // ✅ 조명 추가 (배와 보드판이 잘 보이도록)
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            directionalLight.position.set(5, 10, 5);
+            directionalLight.position.set(5, 15, 10);
             scene.add(ambientLight);
             scene.add(directionalLight);
 
@@ -83,26 +85,45 @@
 
         function createBoard() {
             const days = 31;
+            const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
             const rows = 5;
             const cols = 7;
             let count = 1;
+            const calendarContainer = document.getElementById("calendar-container");
+            calendarContainer.innerHTML = "";
+
+            for (let i = 0; i < daysOfWeek.length; i++) {
+                const dayHeader = document.createElement("div");
+                dayHeader.classList.add("day");
+                dayHeader.textContent = daysOfWeek[i];
+                if (i === 0) dayHeader.classList.add("sunday");
+                if (i === 6) dayHeader.classList.add("saturday");
+                calendarContainer.appendChild(dayHeader);
+            }
 
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     if (count > days) break;
 
-                    const geometry = new THREE.BoxGeometry(2, 0.5, 2);
-                    const material = new THREE.MeshStandardMaterial({ 
-                        color: count % 7 === 0 ? 0xff5757 : 0xffffff 
-                    });
+                    const geometry = new THREE.BoxGeometry(3, 0.5, 3);
+                    const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
                     const cube = new THREE.Mesh(geometry, material);
                     
-                    let x = (col - 3) * 2;
-                    let z = -(row - 2) * 2;
+                    let x = (col - 3) * 3;
+                    let z = -(row - 2) * 3;
                     cube.position.set(x, 0, z);
                     
                     scene.add(cube);
                     cubes.push(cube);
+
+                    // HTML 달력 업데이트
+                    const day = document.createElement("div");
+                    day.classList.add("day");
+                    if (col === 0) day.classList.add("sunday");
+                    if (col === 6) day.classList.add("saturday");
+                    day.innerHTML = `<strong>${count}</strong><span>${daysOfWeek[col]}</span>`;
+                    calendarContainer.appendChild(day);
+
                     count++;
                 }
             }
@@ -111,33 +132,33 @@
         function createPlayer() {
             const group = new THREE.Group();
 
-            // 🚢 본체 (배 크기 증가)
-            const bodyGeometry = new THREE.CylinderGeometry(1, 1.5, 3.5, 16);
-            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xff8800 });
+            // 🚢 본체 (더 둥글게 변경)
+            const bodyGeometry = new THREE.CylinderGeometry(1.5, 2, 4, 16);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x0077ff });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
             body.rotation.z = Math.PI / 2;
             group.add(body);
 
             // 🚢 상층부 (객실)
-            const deckGeometry = new THREE.BoxGeometry(2, 1, 2);
-            const deckMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const deckGeometry = new THREE.BoxGeometry(2, 1.5, 2);
+            const deckMaterial = new THREE.MeshStandardMaterial({ color: 0xffdd00 });
             const deck = new THREE.Mesh(deckGeometry, deckMaterial);
-            deck.position.set(0, 1.5, 0);
+            deck.position.set(0, 1.8, 0);
             group.add(deck);
+
+            // 🚢 창문
+            const windowGeometry = new THREE.CircleGeometry(0.3, 16);
+            const windowMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            for (let i = -0.5; i <= 0.5; i += 0.5) {
+                const windowMesh = new THREE.Mesh(windowGeometry, windowMaterial);
+                windowMesh.position.set(1.3, 1.8, i);
+                windowMesh.rotation.y = Math.PI / 2;
+                group.add(windowMesh);
+            }
 
             player = group;
             scene.add(player);
             updatePlayerPosition();
-        }
-
-        function updatePlayerPosition() {
-            if (playerPosition < cubes.length) {
-                const position = cubes[playerPosition].position;
-                new TWEEN.Tween(player.position)
-                    .to({ x: position.x, y: position.y + 1, z: position.z }, 1000)
-                    .easing(TWEEN.Easing.Sinusoidal.InOut)
-                    .start();
-            }
         }
 
         function rollDice() {
@@ -152,12 +173,6 @@
             player.position.y = 1 + Math.sin(waveTime) * 0.2;
             TWEEN.update();
             renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
         init();
